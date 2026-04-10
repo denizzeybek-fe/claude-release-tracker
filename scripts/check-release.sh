@@ -31,17 +31,25 @@ fi
 
 echo "New release detected: ${TAG} (published ${PUBLISHED_AT})"
 
-CHANGELOG_PREVIEW=$(echo "$BODY" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g' | head -c 300)
+TRIMMED_BODY=$(echo "$BODY" | sed '/^[[:space:]]*$/d' | head -c 500)
 
-MESSAGE="<b>New Claude Code Release!</b>
+if [ -n "$TRIMMED_BODY" ]; then
+  CHANGELOG_PREVIEW=$(echo "$TRIMMED_BODY" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g' | head -c 300)
+  CHANGELOG_SECTION="
+<b>Changelog Preview:</b>
+<pre>${CHANGELOG_PREVIEW}</pre>"
+else
+  CHANGELOG_SECTION="
+<i>No changelog provided in this release.</i>"
+fi
+
+MESSAGE="<b>New Claude Code Release! 🚀</b>
 
 <b>Version:</b> ${NAME} (${TAG})
 <b>Published:</b> ${PUBLISHED_AT}
+${CHANGELOG_SECTION}
 
-<b>Changelog Preview:</b>
-<pre>${CHANGELOG_PREVIEW}</pre>
-
-<a href=\"${HTML_URL}\">View Full Release Notes</a>"
+<a href=\"${HTML_URL}\">📎 View Full Release Notes</a>"
 
 RESPONSE=$(curl -s -X POST "$TELEGRAM_API" \
   -d chat_id="${TELEGRAM_CHAT_ID}" \

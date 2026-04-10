@@ -145,31 +145,34 @@ bash scripts/check-release.sh
 
 Asagidaki bildirim `v2.1.100` release'i icin gercek workflow ciktisidir (10 Nisan 2026):
 
-```
-┌──────────────────────────────────────────┐
-│  🆕 New Claude Code Release!             │
-│                                          │
-│  Version: v2.1.100 (v2.1.100)           │
-│  Published: 2026-04-10T05:16:35Z        │
-│                                          │
-│  Changelog Preview:                      │
-│  (release notes icerigi buraya gelir)    │
-│                                          │
-│  📎 View Full Release Notes              │
-└──────────────────────────────────────────┘
-```
-
 Bot mesaji HTML formatinda gonderir. Telegram'da soyle gorunur:
 
-> **New Claude Code Release!**
+**Changelog varsa:**
+
+> **New Claude Code Release! 🚀**
+>
+> **Version:** v2.2.0 (v2.2.0)
+> **Published:** 2026-05-01T10:00:00Z
+>
+> **Changelog Preview:**
+> ```
+> - Added MCP server hot-reload support
+> - Fixed context window calculation bug
+> - Improved streaming performance
+> ```
+>
+> [📎 View Full Release Notes](https://github.com/anthropics/claude-code/releases/tag/v2.2.0)
+
+**Changelog yoksa (cogu Anthropic release'i boyle):**
+
+> **New Claude Code Release! 🚀**
 >
 > **Version:** v2.1.100 (v2.1.100)
 > **Published:** 2026-04-10T05:16:35Z
 >
-> **Changelog Preview:**
-> `(ilk 300 karakter gosterilir)`
+> *No changelog provided in this release.*
 >
-> [View Full Release Notes](https://github.com/anthropics/claude-code/releases/tag/v2.1.100)
+> [📎 View Full Release Notes](https://github.com/anthropics/claude-code/releases/tag/v2.1.100)
 
 ### Gercek Workflow Log Ciktisi
 
