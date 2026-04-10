@@ -90,95 +90,126 @@ gh workflow run release-check.yml
 
 ## Usage Example
 
-### Workflow Nasil Calisir?
+### Workflow Akisi
 
 ```
-1. Her gun 09:00 UTC'de GitHub Actions tetiklenir
-2. scripts/check-release.sh calisir
-3. GitHub API'den anthropics/claude-code'un son release'i cekilir
-4. published_at tarihi kontrol edilir:
-   - Son 24 saat icinde mi? → Telegram bildirimi gonder
-   - 24 saatten eski mi?   → Hicbir sey yapma
+┌─────────────────────────────────────────────────────────┐
+│  09:00 UTC — GitHub Actions cron tetiklenir             │
+│                                                         │
+│  1. scripts/check-release.sh calisir                    │
+│  2. GitHub API'den son release cekilir:                 │
+│     GET /repos/anthropics/claude-code/releases/latest   │
+│  3. published_at kontrol edilir:                        │
+│     ├─ < 24 saat → Telegram bildirimi gonder ✅         │
+│     └─ > 24 saat → Sessizce cik, bildirim yok 🔇       │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### Manuel Test
+### Manuel Test (CLI)
 
 ```bash
-# 1. Workflow'u tetikle
+# Workflow'u tetikle
 gh workflow run release-check.yml
 
-# 2. Calisma durumunu kontrol et
-gh run list --workflow=release-check.yml --limit=1
+# Durumunu takip et (canli)
+gh run watch
 
-# 3. Loglarini gor
-gh run view --log
+# Veya son calismayi gor
+gh run list --workflow=release-check.yml --limit=1
+# STATUS  TITLE                        BRANCH  EVENT              ID            ELAPSED
+# ✓       Claude Code Release Checker  main    workflow_dispatch  24246092237   9s
+
+# Loglarini gor
+gh run view 24246092237 --log
 ```
 
-### Lokal Test (opsiyonel)
+### Lokal Test
 
 ```bash
-# Environment variable'lari set et
-export TELEGRAM_BOT_TOKEN="7123456789:AAHxxxxxxxxxx"
-export TELEGRAM_CHAT_ID="123456789"
+# Secret'lari set et
+export TELEGRAM_BOT_TOKEN="your-token-here"
+export TELEGRAM_CHAT_ID="your-chat-id"
 
-# Script'i calistir
+# Calistir
 bash scripts/check-release.sh
+# Checking latest release for anthropics/claude-code...
+# New release detected: v2.1.100 (published 2026-04-10T05:16:35Z)
+# Telegram notification sent successfully!
 ```
 
 ---
 
 ## Implementation Example
 
-### Telegram Mesaj Ornegi
+### Gercek Telegram Bildirimi
 
-Bot su formatta mesaj gonderir:
+Asagidaki bildirim `v2.1.100` release'i icin gercek workflow ciktisidir (10 Nisan 2026):
 
 ```
-+------------------------------------------+
-| New Claude Code Release!                  |
-|                                          |
-| Version: Claude Code v1.0.20 (v1.0.20)  |
-| Published: 2026-04-09T15:30:00Z          |
-|                                          |
-| Changelog Preview:                       |
-| - Fixed bug in auto-completion           |
-| - Added support for new MCP tools        |
-| - Performance improvements               |
-|                                          |
-| [View Full Release Notes]                |
-+------------------------------------------+
+┌──────────────────────────────────────────┐
+│  🆕 New Claude Code Release!             │
+│                                          │
+│  Version: v2.1.100 (v2.1.100)           │
+│  Published: 2026-04-10T05:16:35Z        │
+│                                          │
+│  Changelog Preview:                      │
+│  (release notes icerigi buraya gelir)    │
+│                                          │
+│  📎 View Full Release Notes              │
+└──────────────────────────────────────────┘
 ```
 
-Gercek Telegram gorunumu (HTML formatted):
+Bot mesaji HTML formatinda gonderir. Telegram'da soyle gorunur:
 
 > **New Claude Code Release!**
 >
-> **Version:** Claude Code v1.0.20 (v1.0.20)
-> **Published:** 2026-04-09T15:30:00Z
+> **Version:** v2.1.100 (v2.1.100)
+> **Published:** 2026-04-10T05:16:35Z
 >
 > **Changelog Preview:**
-> ```
-> - Fixed bug in auto-completion
-> - Added support for new MCP tools
-> ```
+> `(ilk 300 karakter gosterilir)`
 >
-> [View Full Release Notes](https://github.com/anthropics/claude-code/releases/tag/v1.0.20)
+> [View Full Release Notes](https://github.com/anthropics/claude-code/releases/tag/v2.1.100)
 
-### Workflow Output Ornegi
+### Gercek Workflow Log Ciktisi
+
+Yeni release varsa:
 
 ```
 Run bash scripts/check-release.sh
 Checking latest release for anthropics/claude-code...
-New release detected: v1.0.20 (published 2026-04-09T15:30:00Z)
+New release detected: v2.1.100 (published 2026-04-10T05:16:35Z)
 Telegram notification sent successfully!
 ```
 
-Release yoksa:
+Yeni release yoksa:
 
 ```
 Run bash scripts/check-release.sh
 Checking latest release for anthropics/claude-code...
-Latest release 'v1.0.19' is older than 24 hours. No notification needed.
+Latest release 'v2.1.100' is older than 24 hours. No notification needed.
+```
+
+### Script Nasil Calisiyor? (Adim Adim)
+
+```bash
+# 1. GitHub API'den son release'i cek
+curl -s "https://api.github.com/repos/anthropics/claude-code/releases/latest"
+# → { "tag_name": "v2.1.100", "published_at": "2026-04-10T05:16:35Z", ... }
+
+# 2. published_at'i unix timestamp'e cevir
+date -d "2026-04-10T05:16:35Z" +%s  # → 1744258595
+
+# 3. Simdiki zaman ile karsilastir (fark < 86400 saniye = 24 saat mi?)
+now=$(date +%s)  # → 1744310804
+diff=$((now - 1744258595))  # → 52209 (< 86400 ✅)
+
+# 4. Fark 24 saatten kucukse Telegram'a gonder
+curl -X POST "https://api.telegram.org/bot<TOKEN>/sendMessage" \
+  -d chat_id="<CHAT_ID>" \
+  -d parse_mode="HTML" \
+  --data-urlencode "text=<b>New Claude Code Release!</b>..."
+# → { "ok": true, "result": { "message_id": 42, ... } }
 ```
 
 ---
