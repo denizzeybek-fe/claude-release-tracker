@@ -1,0 +1,21 @@
+name: Claude Code Release Checker
+
+on:
+  schedule:
+    - cron: '0 9 * * *' # Every day at 09:00 UTC
+  workflow_dispatch: # Manual trigger for testing
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for new Claude Code release
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          chmod +x scripts/check-release.sh
+          bash scripts/check-release.sh
